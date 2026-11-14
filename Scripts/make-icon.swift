@@ -1,8 +1,6 @@
 import AppKit
 
-let arguments = Array(CommandLine.arguments.dropFirst())
-let output = arguments.first ?? "icon.png"
-let style = arguments.count > 1 ? arguments[1] : "boxtint"
+let output = CommandLine.arguments.dropFirst().first ?? "icon.png"
 let size = 1024
 
 let rep = NSBitmapImageRep(
@@ -20,40 +18,25 @@ NSGradient(colors: [NSColor(white: 0.18, alpha: 1), NSColor(white: 0.06, alpha: 
     .draw(in: tilePath, angle: -90)
 tilePath.addClip()
 
-func pane(_ rect: CGRect, _ r: CGFloat, _ g: CGFloat, _ b: CGFloat) {
-    let path = NSBezierPath(roundedRect: rect, xRadius: 28, yRadius: 28)
-    NSColor(srgbRed: r, green: g, blue: b, alpha: 0.62).setFill()
-    path.fill()
-    NSColor(white: 0.02, alpha: 0.9).setStroke()
-    path.lineWidth = 22
-    path.stroke()
+let screen = CGRect(x: 200, y: 230, width: 624, height: 564)
+let screenPath = NSBezierPath(roundedRect: screen, xRadius: 36, yRadius: 36)
+NSGradient(colors: [
+    NSColor(srgbRed: 0.16, green: 0.08, blue: 0, alpha: 1),
+    NSColor(srgbRed: 0.05, green: 0.02, blue: 0, alpha: 1),
+])!.draw(in: screenPath, angle: -90)
+
+let amber = NSColor(srgbRed: 1, green: 0.69, blue: 0, alpha: 1)
+let lines: [(CGFloat, CGFloat)] = [(0.85, 1), (0.6, 0.8), (0.72, 0.55), (0.4, 0.9), (0.66, 0.4)]
+for (i, (width, brightness)) in lines.enumerated() {
+    let y = screen.maxY - 120 - CGFloat(i) * 82
+    let bar = CGRect(x: screen.minX + 70, y: y, width: (screen.width - 140) * width, height: 36)
+    amber.withAlphaComponent(brightness).setFill()
+    NSBezierPath(roundedRect: bar, xRadius: 18, yRadius: 18).fill()
 }
 
-if style == "amber" {
-    let screen = CGRect(x: 200, y: 230, width: 624, height: 564)
-    let screenPath = NSBezierPath(roundedRect: screen, xRadius: 36, yRadius: 36)
-    NSGradient(colors: [
-        NSColor(srgbRed: 0.16, green: 0.08, blue: 0, alpha: 1),
-        NSColor(srgbRed: 0.05, green: 0.02, blue: 0, alpha: 1),
-    ])!.draw(in: screenPath, angle: -90)
-
-    let amber = NSColor(srgbRed: 1, green: 0.69, blue: 0, alpha: 1)
-    let lines: [(CGFloat, CGFloat)] = [(0.85, 1), (0.6, 0.8), (0.72, 0.55), (0.4, 0.9), (0.66, 0.4)]
-    for (i, (width, brightness)) in lines.enumerated() {
-        let y = screen.maxY - 120 - CGFloat(i) * 82
-        let bar = CGRect(x: screen.minX + 70, y: y, width: (screen.width - 140) * width, height: 36)
-        amber.withAlphaComponent(brightness).setFill()
-        NSBezierPath(roundedRect: bar, xRadius: 18, yRadius: 18).fill()
-    }
-
-    NSColor(white: 0.02, alpha: 0.9).setStroke()
-    screenPath.lineWidth = 22
-    screenPath.stroke()
-} else {
-    pane(CGRect(x: 210, y: 400, width: 380, height: 420), 0.75, 0.09, 0.17)
-    pane(CGRect(x: 430, y: 470, width: 380, height: 330), 1.0, 0.67, 0.0)
-    pane(CGRect(x: 330, y: 200, width: 420, height: 360), 0.0, 0.28, 0.67)
-}
+NSColor(white: 0.02, alpha: 0.9).setStroke()
+screenPath.lineWidth = 22
+screenPath.stroke()
 
 NSGradient(colors: [NSColor(white: 1, alpha: 0.16), NSColor(white: 1, alpha: 0)])!
     .draw(in: CGRect(x: tile.minX, y: tile.midY, width: tile.width, height: tile.height / 2), angle: -90)

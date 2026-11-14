@@ -1,13 +1,12 @@
 #!/bin/bash
-# Builds "build/Box Tint.app" and "build/Amber Glass.app".
-# Pass --install to also copy them into /Applications.
+# Builds "build/Amber Glass.app". Pass --install to also copy it into /Applications.
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# The certificate name stays as-is. macOS ties Screen Recording permission to this
+# identity, so renaming it would make the app ask for permission again.
 SIGN_ID="Box Tint Local"
 
-# A stable identity, so macOS keeps Screen Recording permission across rebuilds.
-# Ad-hoc signatures change every build, and the system treats each one as a new app.
 if ! security find-identity -v -p codesigning | grep -q "$SIGN_ID"; then
   tmp=$(mktemp -d)
   openssl req -x509 -newkey rsa:2048 -keyout "$tmp/key.pem" -out "$tmp/cert.pem" -days 3650 -nodes \
@@ -22,39 +21,29 @@ fi
 
 swift build -c release --disable-sandbox
 
-# bundle <App Name> <executable> <icon style>
-bundle() {
-  local name="$1" exe="$2" style="$3"
-  local app="build/$name.app"
-  local iconset="build/$exe.iconset"
-  local icon="build/$exe-1024.png"
+APP="build/Amber Glass.app"
+ICONSET="build/AmberGlass.iconset"
+ICON="build/AmberGlass-1024.png"
 
-  rm -rf "$app" "$iconset"
-  mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources" "$iconset"
+rm -rf "$APP" "$ICONSET"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$ICONSET"
 
-  cp ".build/release/$exe" "$app/Contents/MacOS/$exe"
-  cp "Resources/$exe-Info.plist" "$app/Contents/Info.plist"
+cp .build/release/AmberGlass "$APP/Contents/MacOS/AmberGlass"
+cp Resources/AmberGlass-Info.plist "$APP/Contents/Info.plist"
 
-  swift Scripts/make-icon.swift "$icon" "$style"
-  for s in 16 32 128 256 512; do
-    sips -z $s $s "$icon" --out "$iconset/icon_${s}x${s}.png" >/dev/null
-    sips -z $((s * 2)) $((s * 2)) "$icon" --out "$iconset/icon_${s}x${s}@2x.png" >/dev/null
-  done
-  iconutil -c icns "$iconset" -o "$app/Contents/Resources/AppIcon.icns"
-  rm -rf "$iconset" "$icon"
+swift Scripts/make-icon.swift "$ICON"
+for s in 16 32 128 256 512; do
+  sips -z $s $s "$ICON" --out "$ICONSET/icon_${s}x${s}.png" >/dev/null
+  sips -z $((s * 2)) $((s * 2)) "$ICON" --out "$ICONSET/icon_${s}x${s}@2x.png" >/dev/null
+done
+iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
+rm -rf "$ICONSET" "$ICON"
 
-  codesign --force --sign "$SIGN_ID" --timestamp=none "$app"
-  echo "Built $app"
+codesign --force --sign "$SIGN_ID" --timestamp=none "$APP"
+echo "Built $APP"
 
-  if [[ "$INSTALL" == 1 ]]; then
-    rm -rf "/Applications/$name.app"
-    cp -R "$app" /Applications/
-    echo "Installed to /Applications/$name.app"
-  fi
-}
-
-INSTALL=0
-[[ "${1:-}" == "--install" ]] && INSTALL=1
-
-bundle "Box Tint" BoxTint boxtint
-bundle "Amber Glass" AmberGlass amber
+if [[ "${1:-}" == "--install" ]]; then
+  rm -rf "/Applications/Amber Glass.app"
+  cp -R "$APP" /Applications/
+  echo "Installed to /Applications/Amber Glass.app"
+fi

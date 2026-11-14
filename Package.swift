@@ -2,11 +2,10 @@
 import PackageDescription
 
 let package = Package(
-    name: "BoxTint",
+    name: "AmberGlass",
     platforms: [.macOS(.v14)],
     targets: [
         .target(name: "GlassKit", path: "Sources/GlassKit"),
-        .executableTarget(name: "BoxTint", dependencies: ["GlassKit"], path: "Sources/BoxTint"),
         .executableTarget(name: "AmberGlass", dependencies: ["GlassKit"], path: "Sources/AmberGlass"),
     ]
 )
